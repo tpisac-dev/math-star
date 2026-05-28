@@ -151,7 +151,7 @@ export default function SessionScreen({
     const isCorrect = chosen === getProblemAnswer(prob)
 
     // Score: one simple counter, incremented here and nowhere else
-    if (isCorrect) totalCorrectRef.current++
+    if (isCorrect) totalCorrectRef.current = Math.min(totalCorrectRef.current + 1, sessionLengthRef.current)
 
     recordAttempt(prob, isCorrect)
 
