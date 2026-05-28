@@ -15,9 +15,9 @@ export default function LoginScreen({ onLogin }) {
     setLoading(true)
     try {
       if (isRegister) {
-        const { error } = await supabase.auth.signUp({ email, password })
+        const { data, error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        setError('Provjeri email za potvrdu registracije!')
+        onLogin(data.user)
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
