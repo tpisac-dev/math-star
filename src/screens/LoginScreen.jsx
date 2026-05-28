@@ -8,6 +8,7 @@ export default function LoginScreen({ onLogin }) {
   const [isRegister, setIsRegister] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -62,14 +63,24 @@ export default function LoginScreen({ onLogin }) {
             </div>
             <div>
               <label className="block text-gray-600 font-semibold mb-1">Lozinka</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full border-2 border-purple-100 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400 transition"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full border-2 border-purple-100 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400 transition pr-12"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-500 transition text-xl"
+                  tabIndex={-1}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
 
             {error && (
