@@ -127,7 +127,7 @@ export default function SetupScreen({ profile, onStart }) {
           <div>
             <h2 className="text-lg font-bold text-gray-700 mb-3">Broj zadataka</h2>
             <div className="flex gap-3">
-              {[20, 50, 100].map(n => (
+              {[10, 20, 30].map(n => (
                 <button
                   key={n}
                   onClick={() => setSessionLength(n)}
