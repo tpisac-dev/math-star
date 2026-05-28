@@ -38,17 +38,20 @@ export function getEquationParts(prob) {
 
 function buildHardModeQueue({ factors, sessionLength, types, operation }) {
   const queue = []
+  const typeAssignment = new Map()
   for (let i = 0; i < sessionLength; i++) {
     const small = factors[Math.floor(Math.random() * factors.length)]
     const large = 11 + Math.floor(Math.random() * 89) // 11–99
     let op = operation
     if (operation === 'both') op = Math.random() < 0.5 ? 'multiplication' : 'division'
+    const key = `${small}×${large}-${op}`
+    if (!typeAssignment.has(key)) typeAssignment.set(key, randomType(types))
     queue.push({
       id: `hm-${i}-${small}x${large}-${op}`,
-      a: small,   // for mult: factorA; for div: divisor (small), quotient=large
+      a: small,
       b: large,
       operation: op,
-      type: randomType(types),
+      type: typeAssignment.get(key),
       hardMode: true,
     })
   }
@@ -110,15 +113,18 @@ export function buildQueue({ factors, sessionLength, types, operation = 'multipl
 
   const pool = buildWeightedPool({ factors, operation, srData, historyData })
   const queue = []
+  const typeAssignment = new Map()
 
   for (let i = 0; i < sessionLength; i++) {
     const fact = weightedSample(pool)
+    const key = `${fact.a}×${fact.b}-${fact.operation}`
+    if (!typeAssignment.has(key)) typeAssignment.set(key, randomType(types))
     queue.push({
       id: `${i}-${fact.a}x${fact.b}-${fact.operation}`,
       a: fact.a,
       b: fact.b,
       operation: fact.operation,
-      type: randomType(types),
+      type: typeAssignment.get(key),
     })
   }
 
@@ -130,7 +136,7 @@ export function buildQueue({ factors, sessionLength, types, operation = 'multipl
 // wasCorrect=true → insert each division pair once
 // wasCorrect=false → insert each division pair 3× (more practice)
 
-export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, wasCorrect, types, cap) {
+export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, wasCorrect, types, cap, typeMap) {
   const { a, b } = multProblem
   if (!a || !b) return queue
 
@@ -153,6 +159,13 @@ export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, was
   let newQueue = [...queue]
 
   for (const { a: divisor, b: quotient } of pairs) {
+    const divKey = `${divisor}×${quotient}-division`
+    let divType = typeMap?.get(divKey)
+    if (!divType) {
+      divType = randomType(types)
+      if (typeMap) typeMap.set(divKey, divType)
+    }
+
     const remaining = newQueue.slice(currentIndex + 1)
     const existing = remaining.filter(p =>
       p.operation === 'division' && p.a === divisor && p.b === quotient
@@ -167,7 +180,7 @@ export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, was
         a: divisor,
         b: quotient,
         operation: 'division',
-        type: randomType(types),
+        type: divType,
         isRelated: true,
       })
     }
@@ -179,7 +192,7 @@ export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, was
 // ── Wrong-answer repetition ─────────────────────────────────────────────────
 // Operation-aware: { a, b, operation } is the full identity of a fact.
 
-export function insertWrongRepeat(queue, currentIndex, problem, cap) {
+export function insertWrongRepeat(queue, currentIndex, problem, cap, typeMap) {
   const effectiveCap = cap ?? queue.length
   const factKey = `${problem.a}×${problem.b}-${problem.operation}`
   const remaining = queue.slice(currentIndex + 1, effectiveCap)
@@ -191,9 +204,7 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap) {
   if (toInsert === 0) return queue
 
   const minSpacing = effectiveCap <= 10 ? 3 : effectiveCap <= 20 ? 5 : 7
-
-  const typePool = ['multiple-choice', 'fill-in']
-  let lastTypeIdx = typePool.indexOf(problem.type)
+  const assignedType = typeMap?.get(factKey) || problem.type
 
   const newQueue = [...queue]
   const positions = []
@@ -206,13 +217,12 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap) {
   }
 
   for (let i = positions.length - 1; i >= 0; i--) {
-    lastTypeIdx = (lastTypeIdx + 1) % 2
     newQueue.splice(positions[i], 0, {
       id: `repeat-${Date.now()}-${i}-${factKey}`,
       a: problem.a,
       b: problem.b,
       operation: problem.operation,
-      type: typePool[lastTypeIdx],
+      type: assignedType,
       isRepeat: true,
     })
   }

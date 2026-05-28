@@ -56,7 +56,8 @@ export default function SessionScreen({
   const indexRef        = useRef(0)
   const totalRef        = useRef(0)
   const resultsRef      = useRef([])
-  const correctCountRef = useRef(0)
+  const totalCorrectRef = useRef(0)
+  const typeMapRef      = useRef(new Map())
   const sm2Pending      = useRef(new Map())
   const historyBatch    = useRef([])
 
@@ -70,6 +71,12 @@ export default function SessionScreen({
 
     // Redemption / custom queue path — skip Supabase entirely
     if (prebuiltQueue) {
+      const tm = new Map()
+      for (const p of prebuiltQueue) {
+        const k = `${p.a}×${p.b}-${p.operation}`
+        if (!tm.has(k)) tm.set(k, p.type)
+      }
+      typeMapRef.current = tm
       queueRef.current = prebuiltQueue
       totalRef.current = prebuiltQueue.length
       startTimeRef.current = Date.now()
@@ -101,6 +108,12 @@ export default function SessionScreen({
       srData: srData || [],
       historyData: historyData || [],
     })
+    const tm = new Map()
+    for (const p of q) {
+      const k = `${p.a}×${p.b}-${p.operation}`
+      if (!tm.has(k)) tm.set(k, p.type)
+    }
+    typeMapRef.current = tm
     queueRef.current = q
     totalRef.current = q.length
     startTimeRef.current = Date.now()
@@ -118,6 +131,8 @@ export default function SessionScreen({
   )
 
   // ── Record answer attempt ─────────────────────────────────────────────────
+  // Handles Supabase tracking and per-fact breakdown (resultsRef).
+  // Score counting (totalCorrectRef) happens in handleAnswer.
   function recordAttempt(prob, isCorrect) {
     const op = prob.operation || 'multiplication'
     if (!noTracking) {
@@ -131,9 +146,7 @@ export default function SessionScreen({
       const prev = sm2Pending.current.get(key)
       sm2Pending.current.set(key, { existing: prev?.existing || null, correct: isCorrect })
     }
-    // All correct answers count toward the score (including repeats)
-    if (isCorrect) correctCountRef.current++
-    // Per-fact breakdown uses first-attempt only (for the summary wrong/crushed lists)
+    // Per-fact breakdown: first-attempt only (for the summary wrong/crushed lists)
     if (!prob.isRepeat) {
       const entry = { a: prob.a, b: prob.b, operation: op, correct: isCorrect }
       resultsRef.current = [...resultsRef.current, entry]
@@ -146,6 +159,9 @@ export default function SessionScreen({
     if (phase !== 'answering') return
     const prob = queueRef.current[indexRef.current]
     const isCorrect = chosen === getProblemAnswer(prob)
+
+    // Score: one simple counter, incremented here and nowhere else
+    if (isCorrect) totalCorrectRef.current++
 
     recordAttempt(prob, isCorrect)
 
@@ -165,7 +181,7 @@ export default function SessionScreen({
       }
 
       if (!noRepeat && settings.operation === 'both' && prob.operation === 'multiplication') {
-        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, true, settings.types, totalRef.current)
+        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, true, settings.types, totalRef.current, typeMapRef.current)
         queueRef.current = updated
         setQueue(updated)
       }
@@ -179,7 +195,7 @@ export default function SessionScreen({
       setReShakeTarget(null)
 
       if (!noRepeat && settings.operation === 'both' && prob.operation === 'multiplication') {
-        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, false, settings.types, totalRef.current)
+        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, false, settings.types, totalRef.current, typeMapRef.current)
         queueRef.current = updated
         setQueue(updated)
       }
@@ -210,7 +226,7 @@ export default function SessionScreen({
     let newQueue = currentQueue
 
     if (!wasCorrect && !noRepeat) {
-      newQueue = insertWrongRepeat(currentQueue, currentIndex, currentProblem, cap)
+      newQueue = insertWrongRepeat(currentQueue, currentIndex, currentProblem, cap, typeMapRef.current)
       queueRef.current = newQueue
       setQueue(newQueue)
     }
@@ -263,8 +279,9 @@ export default function SessionScreen({
       }
     }
 
-    const sessionTotal = totalRef.current
-    const correctCount = Math.min(correctCountRef.current, sessionTotal)
+    // Denominator is always the chosen session length — never derived from queue or index
+    const sessionTotal = settings?.sessionLength ?? totalRef.current
+    const correctCount = Math.min(totalCorrectRef.current, sessionTotal)
     onFinish(resultsRef.current, { durationMs, sessionTotal, correctCount })
   }
 
