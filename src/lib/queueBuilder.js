@@ -190,6 +190,8 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap) {
   const toInsert = Math.max(0, Math.min(5, 5 - existingCount))
   if (toInsert === 0) return queue
 
+  const minSpacing = effectiveCap <= 10 ? 3 : effectiveCap <= 20 ? 5 : 7
+
   const typePool = ['multiple-choice', 'fill-in']
   let lastTypeIdx = typePool.indexOf(problem.type)
 
@@ -197,7 +199,7 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap) {
   const positions = []
 
   for (let i = 0; i < toInsert; i++) {
-    const minPos = (positions[positions.length - 1] ?? currentIndex) + 5
+    const minPos = (positions[positions.length - 1] ?? currentIndex) + minSpacing
     const pos = Math.min(minPos, effectiveCap - 1)
     if (pos <= currentIndex) break
     positions.push(pos)
@@ -222,15 +224,41 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap) {
 // Each wrong fact appears once as fill-in + once as multiple-choice, shuffled.
 
 export function buildRedemptionQueue(wrongFacts) {
-  const queue = []
-  for (const fact of wrongFacts) {
-    queue.push({ a: fact.a, b: fact.b, operation: fact.operation, type: 'fill-in',        id: `r-fi-${fact.a}x${fact.b}-${fact.operation}` })
-    queue.push({ a: fact.a, b: fact.b, operation: fact.operation, type: 'multiple-choice', id: `r-mc-${fact.a}x${fact.b}-${fact.operation}` })
+  // Deduplicate input facts by (operation, a, b)
+  const seen = new Set()
+  const unique = []
+  for (const f of wrongFacts) {
+    const key = `${f.operation}|${f.a}×${f.b}`
+    if (!seen.has(key)) { seen.add(key); unique.push(f) }
   }
+
+  const queue = []
+  for (const f of unique) {
+    queue.push({ a: f.a, b: f.b, operation: f.operation, type: 'fill-in',        id: `r-fi-${f.a}x${f.b}-${f.operation}` })
+    queue.push({ a: f.a, b: f.b, operation: f.operation, type: 'multiple-choice', id: `r-mc-${f.a}x${f.b}-${f.operation}` })
+  }
+
+  // Fisher-Yates shuffle
   for (let i = queue.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]]
   }
+
+  // Separate same-fact pairs that landed adjacent after shuffle
+  for (let i = 1; i < queue.length; i++) {
+    const prev = queue[i - 1]
+    const cur  = queue[i]
+    if (cur.a === prev.a && cur.b === prev.b && cur.operation === prev.operation) {
+      for (let j = i + 1; j < queue.length; j++) {
+        const cand = queue[j]
+        if (!(cand.a === prev.a && cand.b === prev.b && cand.operation === prev.operation)) {
+          ;[queue[i], queue[j]] = [queue[j], queue[i]]
+          break
+        }
+      }
+    }
+  }
+
   return queue
 }
 

@@ -210,10 +210,10 @@ export default function SessionScreen({
     setReFillValue('')
     setReShakeTarget(null)
 
-    if (currentIndex + 1 >= cap) {
+    const next = currentIndex + 1
+    if (next >= cap || next >= queueRef.current.length) {
       finishSession()
     } else {
-      const next = currentIndex + 1
       indexRef.current = next
       setIndex(next)
     }
@@ -291,21 +291,21 @@ export default function SessionScreen({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center"
+              className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 w-full max-w-xs sm:max-w-sm text-center"
             >
-              <div className="text-5xl mb-4">🤔</div>
-              <h2 className="text-xl font-black text-gray-800 mb-2">Prekini vježbanje?</h2>
-              <p className="text-gray-500 mb-6">Napredak iz ove sesije neće biti spremljen.</p>
-              <div className="flex flex-col gap-3">
+              <div className="text-4xl sm:text-5xl mb-3">🤔</div>
+              <h2 className="text-base sm:text-xl font-black text-gray-800 mb-2">Prekini vježbanje?</h2>
+              <p className="text-sm text-gray-500 mb-5">Napredak iz ove sesije neće biti spremljen.</p>
+              <div className="flex flex-col gap-2.5">
                 <button
                   onClick={() => setShowQuitDialog(false)}
-                  className="w-full py-3 rounded-2xl font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow"
+                  className="w-full py-3 rounded-2xl text-sm sm:text-base font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow"
                 >
                   Nastavi vježbati
                 </button>
                 <button
                   onClick={handleQuit}
-                  className="w-full py-3 rounded-2xl font-bold text-gray-500 border-2 border-gray-200 hover:bg-gray-50 transition"
+                  className="w-full py-3 rounded-2xl text-sm sm:text-base font-bold text-gray-500 border-2 border-gray-200 hover:bg-gray-50 transition"
                 >
                   Prekini
                 </button>

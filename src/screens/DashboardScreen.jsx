@@ -155,7 +155,7 @@ export default function DashboardScreen({ profile, onBack }) {
                   <div className="flex mb-1">
                     <div className="w-7 h-7" />
                     {Array.from({ length: 12 }, (_, i) => (
-                      <div key={i} className="w-9 h-7 flex items-center justify-center text-xs font-bold text-gray-400">
+                      <div key={i} className="w-9 h-7 mx-0.5 flex items-center justify-center text-xs font-bold text-gray-400">
                         {i + 1}
                       </div>
                     ))}
