@@ -50,14 +50,15 @@ export default function SessionScreen({
   const [showQuitDialog, setShowQuitDialog] = useState(false)
   const [answered, setAnswered]         = useState(0)
 
-  const timerRef     = useRef(null)
-  const startTimeRef = useRef(null)
-  const queueRef     = useRef(null)
-  const indexRef     = useRef(0)
-  const totalRef     = useRef(0)
-  const resultsRef   = useRef([])
-  const sm2Pending   = useRef(new Map())
-  const historyBatch = useRef([])
+  const timerRef        = useRef(null)
+  const startTimeRef    = useRef(null)
+  const queueRef        = useRef(null)
+  const indexRef        = useRef(0)
+  const totalRef        = useRef(0)
+  const resultsRef      = useRef([])
+  const correctCountRef = useRef(0)
+  const sm2Pending      = useRef(new Map())
+  const historyBatch    = useRef([])
 
   useEffect(() => {
     initSession()
@@ -116,7 +117,7 @@ export default function SessionScreen({
     [current?.id]
   )
 
-  // ── Record first-try attempt ───────────────────────────────────────────────
+  // ── Record answer attempt ─────────────────────────────────────────────────
   function recordAttempt(prob, isCorrect) {
     const op = prob.operation || 'multiplication'
     if (!noTracking) {
@@ -130,6 +131,9 @@ export default function SessionScreen({
       const prev = sm2Pending.current.get(key)
       sm2Pending.current.set(key, { existing: prev?.existing || null, correct: isCorrect })
     }
+    // All correct answers count toward the score (including repeats)
+    if (isCorrect) correctCountRef.current++
+    // Per-fact breakdown uses first-attempt only (for the summary wrong/crushed lists)
     if (!prob.isRepeat) {
       const entry = { a: prob.a, b: prob.b, operation: op, correct: isCorrect }
       resultsRef.current = [...resultsRef.current, entry]
@@ -259,7 +263,9 @@ export default function SessionScreen({
       }
     }
 
-    onFinish(resultsRef.current, { durationMs, sessionTotal: totalRef.current })
+    const sessionTotal = totalRef.current
+    const correctCount = Math.min(correctCountRef.current, sessionTotal)
+    onFinish(resultsRef.current, { durationMs, sessionTotal, correctCount })
   }
 
   // ── Quit (no SR saves) ─────────────────────────────────────────────────────

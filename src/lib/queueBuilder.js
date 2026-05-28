@@ -232,12 +232,10 @@ export function buildRedemptionQueue(wrongFacts) {
     if (!seen.has(key)) { seen.add(key); unique.push(f) }
   }
 
-  // One entry per fact, alternating type
+  // One fill-in entry per fact
   const queue = []
-  for (let i = 0; i < unique.length; i++) {
-    const f = unique[i]
-    const type = i % 2 === 0 ? 'fill-in' : 'multiple-choice'
-    queue.push({ a: f.a, b: f.b, operation: f.operation, type, id: `r-${f.a}x${f.b}-${f.operation}` })
+  for (const f of unique) {
+    queue.push({ a: f.a, b: f.b, operation: f.operation, type: 'fill-in', id: `r-${f.a}x${f.b}-${f.operation}` })
   }
 
   // Fisher-Yates shuffle
