@@ -61,7 +61,7 @@ export default function SetupScreen({ profile, onStart }) {
         <div className="text-center mb-6">
           <span className="text-5xl">{profile.avatar}</span>
           <h1 className="text-2xl font-black text-purple-700 mt-1">{profile.username}</h1>
-          <p className="text-gray-500">Postavi vježbu</p>
+          <p className="text-gray-500">Bok, {profile.username}!</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl p-6 space-y-6">
