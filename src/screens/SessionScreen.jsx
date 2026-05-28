@@ -326,7 +326,7 @@ export default function SessionScreen({
             ✕
           </button>
           <span className="text-2xl">{profile.avatar}</span>
-          <span className="font-bold text-gray-500">{profile.username}</span>
+          <span className="font-bold text-gray-500">Bok, {profile.username}!</span>
           {noTracking && (
             <span className="text-xs bg-amber-100 text-amber-600 font-bold px-2 py-0.5 rounded-full">
               Vježba ponavljanja 🎯

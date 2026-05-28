@@ -88,7 +88,7 @@ export default function SetupScreen({ profile, onStart }) {
 
           {/* Factor selector — always 1–10 */}
           <div>
-            <h2 className="text-lg font-bold text-gray-700 mb-3">Odaberi faktore</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">S kojim brojem želiš vježbati?</h2>
             <div className="grid grid-cols-5 gap-2">
               {BASE_FACTORS.map(f => (
                 <button

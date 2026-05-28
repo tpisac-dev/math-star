@@ -81,7 +81,7 @@ function buildWeightedPool({ factors, operation, srData, historyData }) {
   function makePool(op) {
     const pool = []
     for (const a of factors) {
-      for (let b = 1; b <= 12; b++) {
+      for (let b = 1; b <= 10; b++) {
         const key = `${op}|${a}×${b}`
         const sr = srMap[key]
         const err = errorMap[key]
