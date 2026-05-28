@@ -48,6 +48,7 @@ export default function SessionScreen({
   const [floatStar, setFloatStar]       = useState(false)
   const [loading, setLoading]           = useState(true)
   const [showQuitDialog, setShowQuitDialog] = useState(false)
+  const [answered, setAnswered]         = useState(0)
 
   const timerRef     = useRef(null)
   const startTimeRef = useRef(null)
@@ -209,6 +210,7 @@ export default function SessionScreen({
     setFillValue('')
     setReFillValue('')
     setReShakeTarget(null)
+    setAnswered(prev => prev + 1)
 
     const next = currentIndex + 1
     if (next >= cap || next >= queueRef.current.length) {
@@ -272,7 +274,7 @@ export default function SessionScreen({
   }
 
   const total    = totalRef.current
-  const progress = total > 0 ? Math.min(index / total, 1) : 0
+  const progress = total > 0 ? Math.min(answered / total, 1) : 0
   const isTeaching = phase === 'teaching' || phase === 'confirmed'
 
   return (
@@ -366,7 +368,7 @@ export default function SessionScreen({
             className="w-full max-w-lg"
           >
             <div className="bg-white rounded-3xl shadow-xl p-7 text-center mb-4 relative overflow-hidden">
-              <p className="text-gray-300 font-semibold mb-2">{index + 1} / {total}</p>
+              <p className="text-gray-300 font-semibold mb-2">{answered + 1} / {total}</p>
 
               <span className={`text-xs font-black px-2 py-0.5 rounded-full mb-3 inline-block ${
                 current.operation === 'division'
