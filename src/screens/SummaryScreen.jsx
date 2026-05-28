@@ -28,8 +28,8 @@ function formatTime(ms) {
   return `${min} min ${sec} sek`
 }
 
-export default function SummaryScreen({ results, durationMs = 0, onPlayAgain, onChangeSettings, onRedemption }) {
-  const total   = results.length
+export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 0, onPlayAgain, onChangeSettings, onRedemption }) {
+  const total   = sessionTotal > 0 ? sessionTotal : results.length
   const correct = results.filter(r => r.correct).length
   const pct     = total > 0 ? correct / total : 0
   const stars   = starCount(pct)

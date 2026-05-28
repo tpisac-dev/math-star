@@ -42,7 +42,7 @@ export default function App() {
   const [user, setUser]                   = useState(null)
   const [profile, setProfile]             = useState(null)
   const [sessionSettings, setSessionSettings] = useState(null)
-  const [sessionData, setSessionData]     = useState(null)  // { results, durationMs }
+  const [sessionData, setSessionData]     = useState(null)  // { results, durationMs, sessionTotal }
   const [redemptionQueue, setRedemptionQueue] = useState(null)
   const [redemptionResults, setRedemptionResults] = useState(null)
   const [checkingAuth, setCheckingAuth]   = useState(true)
@@ -147,7 +147,7 @@ export default function App() {
               profile={profile}
               settings={sessionSettings}
               onFinish={(results, meta) => {
-                setSessionData({ results, durationMs: meta?.durationMs || 0 })
+                setSessionData({ results, durationMs: meta?.durationMs || 0, sessionTotal: meta?.sessionTotal || 0 })
                 setScreen(SCREENS.SUMMARY)
               }}
               onQuit={() => setScreen(SCREENS.SETUP)}
@@ -160,6 +160,7 @@ export default function App() {
             <SummaryScreen
               results={sessionData.results || []}
               durationMs={sessionData.durationMs || 0}
+              sessionTotal={sessionData.sessionTotal || 0}
               onPlayAgain={() => setScreen(SCREENS.SESSION)}
               onChangeSettings={() => setScreen(SCREENS.SETUP)}
               onRedemption={startRedemption}

@@ -232,31 +232,18 @@ export function buildRedemptionQueue(wrongFacts) {
     if (!seen.has(key)) { seen.add(key); unique.push(f) }
   }
 
+  // One entry per fact, alternating type
   const queue = []
-  for (const f of unique) {
-    queue.push({ a: f.a, b: f.b, operation: f.operation, type: 'fill-in',        id: `r-fi-${f.a}x${f.b}-${f.operation}` })
-    queue.push({ a: f.a, b: f.b, operation: f.operation, type: 'multiple-choice', id: `r-mc-${f.a}x${f.b}-${f.operation}` })
+  for (let i = 0; i < unique.length; i++) {
+    const f = unique[i]
+    const type = i % 2 === 0 ? 'fill-in' : 'multiple-choice'
+    queue.push({ a: f.a, b: f.b, operation: f.operation, type, id: `r-${f.a}x${f.b}-${f.operation}` })
   }
 
   // Fisher-Yates shuffle
   for (let i = queue.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]]
-  }
-
-  // Separate same-fact pairs that landed adjacent after shuffle
-  for (let i = 1; i < queue.length; i++) {
-    const prev = queue[i - 1]
-    const cur  = queue[i]
-    if (cur.a === prev.a && cur.b === prev.b && cur.operation === prev.operation) {
-      for (let j = i + 1; j < queue.length; j++) {
-        const cand = queue[j]
-        if (!(cand.a === prev.a && cand.b === prev.b && cand.operation === prev.operation)) {
-          ;[queue[i], queue[j]] = [queue[j], queue[i]]
-          break
-        }
-      }
-    }
   }
 
   return queue

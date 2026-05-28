@@ -55,6 +55,7 @@ export default function SessionScreen({
   const queueRef     = useRef(null)
   const indexRef     = useRef(0)
   const totalRef     = useRef(0)
+  const resultsRef   = useRef([])
   const sm2Pending   = useRef(new Map())
   const historyBatch = useRef([])
 
@@ -129,7 +130,11 @@ export default function SessionScreen({
       const prev = sm2Pending.current.get(key)
       sm2Pending.current.set(key, { existing: prev?.existing || null, correct: isCorrect })
     }
-    setResults(prev => [...prev, { a: prob.a, b: prob.b, operation: op, correct: isCorrect }])
+    if (!prob.isRepeat) {
+      const entry = { a: prob.a, b: prob.b, operation: op, correct: isCorrect }
+      resultsRef.current = [...resultsRef.current, entry]
+      setResults(prev => [...prev, entry])
+    }
   }
 
   // ── First answer ───────────────────────────────────────────────────────────
@@ -254,7 +259,7 @@ export default function SessionScreen({
       }
     }
 
-    onFinish(results, { durationMs })
+    onFinish(resultsRef.current, { durationMs, sessionTotal: totalRef.current })
   }
 
   // ── Quit (no SR saves) ─────────────────────────────────────────────────────
