@@ -9,6 +9,11 @@ const OPERATIONS = [
   { value: 'both',           label: 'Oboje ×÷' },
 ]
 
+const PROBLEM_TYPES = [
+  { value: 'multiple-choice', label: '🔤 Ponuđeni odgovori' },
+  { value: 'fill-in',         label: '✏️ Upiši odgovor' },
+]
+
 function getStorageKey(profileId) {
   return `mathstar_setup_${profileId}`
 }
@@ -27,8 +32,7 @@ export default function SetupScreen({ profile, onStart }) {
   const [selectedFactors, setSelectedFactors] = useState(saved?.selectedFactors || [2, 3, 4, 5])
   const [hardMode, setHardMode]               = useState(saved?.hardMode || false)
   const [sessionLength, setSessionLength]     = useState(saved?.sessionLength || 20)
-  const [useMultipleChoice, setUseMultipleChoice] = useState(saved?.useMultipleChoice ?? true)
-  const [useFillIn, setUseFillIn]             = useState(saved?.useFillIn ?? true)
+  const [problemType, setProblemType]         = useState(saved?.problemType || 'multiple-choice')
   const [remember, setRemember]               = useState(saved !== null)
 
   function toggleFactor(f) {
@@ -38,18 +42,14 @@ export default function SetupScreen({ profile, onStart }) {
   }
 
   function handleStart() {
-    if (selectedFactors.length === 0 || (!useMultipleChoice && !useFillIn)) return
-    const types = [
-      ...(useMultipleChoice ? ['multiple-choice'] : []),
-      ...(useFillIn ? ['fill-in'] : []),
-    ]
-    const settings = { operation, selectedFactors, hardMode, sessionLength, useMultipleChoice, useFillIn }
+    if (selectedFactors.length === 0) return
+    const settings = { operation, selectedFactors, hardMode, sessionLength, problemType }
     if (remember) localStorage.setItem(getStorageKey(profile.id), JSON.stringify(settings))
     else localStorage.removeItem(getStorageKey(profile.id))
-    onStart({ factors: selectedFactors, sessionLength, types, operation, hardMode })
+    onStart({ factors: selectedFactors, sessionLength, operation, hardMode, type: problemType })
   }
 
-  const canStart = selectedFactors.length > 0 && (useMultipleChoice || useFillIn)
+  const canStart = selectedFactors.length > 0
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-4">
@@ -76,6 +76,26 @@ export default function SetupScreen({ profile, onStart }) {
                   onClick={() => setOperation(opt.value)}
                   className={`flex-1 py-3 rounded-xl text-sm font-bold transition ${
                     operation === opt.value
+                      ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Problem type selector */}
+          <div>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">Vrste zadataka</h2>
+            <div className="flex gap-2">
+              {PROBLEM_TYPES.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setProblemType(opt.value)}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition ${
+                    problemType === opt.value
                       ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-md'
                       : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
                   }`}
@@ -141,36 +161,6 @@ export default function SetupScreen({ profile, onStart }) {
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Problem types */}
-          <div>
-            <h2 className="text-lg font-bold text-gray-700 mb-3">Vrste zadataka</h2>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setUseMultipleChoice(!useMultipleChoice)}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition ${
-                  useMultipleChoice
-                    ? 'bg-gradient-to-br from-green-400 to-teal-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-500 hover:bg-green-50'
-                }`}
-              >
-                🔤 Ponuđeni odgovori
-              </button>
-              <button
-                onClick={() => setUseFillIn(!useFillIn)}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition ${
-                  useFillIn
-                    ? 'bg-gradient-to-br from-green-400 to-teal-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-500 hover:bg-green-50'
-                }`}
-              >
-                ✏️ Upiši odgovor
-              </button>
-            </div>
-            {!useMultipleChoice && !useFillIn && (
-              <p className="text-red-400 text-sm mt-1 text-center">Odaberi barem jednu vrstu</p>
-            )}
           </div>
 
           {/* Remember */}

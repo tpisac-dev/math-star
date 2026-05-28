@@ -67,7 +67,7 @@ export default function App() {
   }, [])
 
   function startRedemption(wrongFacts) {
-    const q = buildRedemptionQueue(wrongFacts)
+    const q = buildRedemptionQueue(wrongFacts, sessionSettings?.type || 'multiple-choice')
     setRedemptionQueue(q)
     setScreen(SCREENS.REDEMPTION)
   }
@@ -173,7 +173,7 @@ export default function App() {
           <PageWrapper key="redemption">
             <SessionScreen
               profile={profile}
-              settings={{ types: ['fill-in'], operation: 'multiplication', factors: [], hardMode: false }}
+              settings={{ type: sessionSettings?.type || 'multiple-choice', operation: 'multiplication', factors: [], hardMode: false }}
               prebuiltQueue={redemptionQueue}
               noTracking
               noRepeat

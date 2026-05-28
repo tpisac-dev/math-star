@@ -10,8 +10,8 @@ import {
   getProblemAnswer,
   getEquationParts,
 } from '../lib/queueBuilder'
-import NumberPad from '../components/NumberPad'
 import ArrayGrid from '../components/ArrayGrid'
+import NumberPad from '../components/NumberPad'
 
 const STREAK_MILESTONES = [5, 10, 20]
 
@@ -58,7 +58,6 @@ export default function SessionScreen({
   const sessionLengthRef   = useRef(0)
   const resultsRef         = useRef([])
   const totalCorrectRef    = useRef(0)
-  const typeMapRef         = useRef(new Map())
   const sm2Pending         = useRef(new Map())
   const historyBatch       = useRef([])
 
@@ -72,12 +71,6 @@ export default function SessionScreen({
 
     // Redemption / custom queue path — skip Supabase entirely
     if (prebuiltQueue) {
-      const tm = new Map()
-      for (const p of prebuiltQueue) {
-        const k = `${p.a}×${p.b}-${p.operation}`
-        if (!tm.has(k)) tm.set(k, p.type)
-      }
-      typeMapRef.current = tm
       queueRef.current = prebuiltQueue
       totalRef.current = prebuiltQueue.length
       sessionLengthRef.current = prebuiltQueue.length
@@ -104,18 +97,12 @@ export default function SessionScreen({
     const q = buildQueue({
       factors: settings.factors,
       sessionLength: settings.sessionLength,
-      types: settings.types,
+      type: settings.type || 'multiple-choice',
       operation: settings.operation || 'multiplication',
       hardMode: settings.hardMode || false,
       srData: srData || [],
       historyData: historyData || [],
     })
-    const tm = new Map()
-    for (const p of q) {
-      const k = `${p.a}×${p.b}-${p.operation}`
-      if (!tm.has(k)) tm.set(k, p.type)
-    }
-    typeMapRef.current = tm
     queueRef.current = q
     totalRef.current = q.length
     sessionLengthRef.current = settings.sessionLength
@@ -184,7 +171,7 @@ export default function SessionScreen({
       }
 
       if (!noRepeat && settings.operation === 'both' && prob.operation === 'multiplication') {
-        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, true, settings.types, totalRef.current, typeMapRef.current)
+        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, true, settings.type || 'multiple-choice', totalRef.current)
         queueRef.current = updated
         setQueue(updated)
       }
@@ -198,7 +185,7 @@ export default function SessionScreen({
       setReShakeTarget(null)
 
       if (!noRepeat && settings.operation === 'both' && prob.operation === 'multiplication') {
-        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, false, settings.types, totalRef.current, typeMapRef.current)
+        const updated = insertRelatedDivisionPairs(queueRef.current, indexRef.current, prob, false, settings.type || 'multiple-choice', totalRef.current)
         queueRef.current = updated
         setQueue(updated)
       }
@@ -229,7 +216,7 @@ export default function SessionScreen({
     let newQueue = currentQueue
 
     if (!wasCorrect && !noRepeat) {
-      newQueue = insertWrongRepeat(currentQueue, currentIndex, currentProblem, cap, typeMapRef.current)
+      newQueue = insertWrongRepeat(currentQueue, currentIndex, currentProblem, settings.type || 'multiple-choice', cap)
       queueRef.current = newQueue
       setQueue(newQueue)
     }

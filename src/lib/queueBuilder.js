@@ -20,10 +20,6 @@ function weightedSampleIndex(pool) {
   return pool.length - 1
 }
 
-function randomType(types) {
-  return types[Math.floor(Math.random() * types.length)]
-}
-
 // ── Problem helpers ─────────────────────────────────────────────────────────
 
 // The canonical representation:
@@ -46,9 +42,8 @@ export function getEquationParts(prob) {
 // ── Hard-mode queue ─────────────────────────────────────────────────────────
 // One factor from selected (1-10), the other random 11-99.
 
-function buildHardModeQueue({ factors, sessionLength, types, operation }) {
+function buildHardModeQueue({ factors, sessionLength, operation, type }) {
   const queue = []
-  const typeAssignment = new Map()
   const seen = new Set()
   while (queue.length < sessionLength) {
     const small = factors[Math.floor(Math.random() * factors.length)]
@@ -58,13 +53,12 @@ function buildHardModeQueue({ factors, sessionLength, types, operation }) {
     const key = `${small}×${large}-${op}`
     if (seen.has(key)) continue
     seen.add(key)
-    typeAssignment.set(key, randomType(types))
     queue.push({
       id: `hm-${queue.length}-${small}x${large}-${op}`,
       a: small,
       b: large,
       operation: op,
-      type: typeAssignment.get(key),
+      type,
       hardMode: true,
     })
   }
@@ -119,14 +113,13 @@ function buildWeightedPool({ factors, operation, srData, historyData }) {
 
 // ── Main queue builder ──────────────────────────────────────────────────────
 
-export function buildQueue({ factors, sessionLength, types, operation = 'multiplication', hardMode = false, srData, historyData }) {
+export function buildQueue({ factors, sessionLength, operation = 'multiplication', hardMode = false, type = 'multiple-choice', srData, historyData }) {
   if (hardMode) {
-    return buildHardModeQueue({ factors, sessionLength, types, operation })
+    return buildHardModeQueue({ factors, sessionLength, operation, type })
   }
 
   const pool = buildWeightedPool({ factors, operation, srData, historyData })
   const queue = []
-  const typeAssignment = new Map()
   // Sample without replacement so no fact appears twice in the initial queue.
   // If the pool is smaller than sessionLength, refill it once exhausted.
   let bag = [...pool]
@@ -135,14 +128,12 @@ export function buildQueue({ factors, sessionLength, types, operation = 'multipl
     const idx = weightedSampleIndex(bag)
     const fact = bag[idx]
     bag.splice(idx, 1)
-    const key = `${fact.a}×${fact.b}-${fact.operation}`
-    if (!typeAssignment.has(key)) typeAssignment.set(key, randomType(types))
     queue.push({
       id: `${i}-${fact.a}x${fact.b}-${fact.operation}`,
       a: fact.a,
       b: fact.b,
       operation: fact.operation,
-      type: typeAssignment.get(key),
+      type,
     })
   }
 
@@ -154,7 +145,7 @@ export function buildQueue({ factors, sessionLength, types, operation = 'multipl
 // wasCorrect=true → insert each division pair once
 // wasCorrect=false → insert each division pair 3× (more practice)
 
-export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, wasCorrect, types, cap, typeMap) {
+export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, wasCorrect, type, cap) {
   const { a, b } = multProblem
   if (!a || !b) return queue
 
@@ -177,13 +168,6 @@ export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, was
   let newQueue = [...queue]
 
   for (const { a: divisor, b: quotient } of pairs) {
-    const divKey = `${divisor}×${quotient}-division`
-    let divType = typeMap?.get(divKey)
-    if (!divType) {
-      divType = randomType(types)
-      if (typeMap) typeMap.set(divKey, divType)
-    }
-
     const remaining = newQueue.slice(currentIndex + 1)
     const existing = remaining.filter(p =>
       p.operation === 'division' && p.a === divisor && p.b === quotient
@@ -198,7 +182,7 @@ export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, was
         a: divisor,
         b: quotient,
         operation: 'division',
-        type: divType,
+        type,
         isRelated: true,
       })
     }
@@ -210,7 +194,7 @@ export function insertRelatedDivisionPairs(queue, currentIndex, multProblem, was
 // ── Wrong-answer repetition ─────────────────────────────────────────────────
 // Operation-aware: { a, b, operation } is the full identity of a fact.
 
-export function insertWrongRepeat(queue, currentIndex, problem, cap, typeMap) {
+export function insertWrongRepeat(queue, currentIndex, problem, type, cap) {
   const effectiveCap = cap ?? queue.length
   const factKey = `${problem.a}×${problem.b}-${problem.operation}`
   const remaining = queue.slice(currentIndex + 1, effectiveCap)
@@ -222,7 +206,6 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap, typeMap) {
   if (toInsert === 0) return queue
 
   const minSpacing = effectiveCap <= 10 ? 3 : effectiveCap <= 20 ? 5 : 7
-  const assignedType = typeMap?.get(factKey) || problem.type
 
   const newQueue = [...queue]
   const positions = []
@@ -240,7 +223,7 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap, typeMap) {
       a: problem.a,
       b: problem.b,
       operation: problem.operation,
-      type: assignedType,
+      type,
       isRepeat: true,
     })
   }
@@ -251,7 +234,7 @@ export function insertWrongRepeat(queue, currentIndex, problem, cap, typeMap) {
 // ── Redemption round queue ──────────────────────────────────────────────────
 // Each wrong fact appears once as fill-in + once as multiple-choice, shuffled.
 
-export function buildRedemptionQueue(wrongFacts) {
+export function buildRedemptionQueue(wrongFacts, type = 'multiple-choice') {
   // Deduplicate input facts by (operation, a, b)
   const seen = new Set()
   const unique = []
@@ -260,10 +243,9 @@ export function buildRedemptionQueue(wrongFacts) {
     if (!seen.has(key)) { seen.add(key); unique.push(f) }
   }
 
-  // One fill-in entry per fact
   const queue = []
   for (const f of unique) {
-    queue.push({ a: f.a, b: f.b, operation: f.operation, type: 'fill-in', id: `r-${f.a}x${f.b}-${f.operation}` })
+    queue.push({ a: f.a, b: f.b, operation: f.operation, type, id: `r-${f.a}x${f.b}-${f.operation}` })
   }
 
   // Fisher-Yates shuffle
