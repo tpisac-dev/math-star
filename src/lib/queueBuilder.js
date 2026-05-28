@@ -10,6 +10,16 @@ function weightedSample(pool) {
   return pool[pool.length - 1]
 }
 
+function weightedSampleIndex(pool) {
+  const total = pool.reduce((s, p) => s + p.weight, 0)
+  let r = Math.random() * total
+  for (let i = 0; i < pool.length; i++) {
+    r -= pool[i].weight
+    if (r <= 0) return i
+  }
+  return pool.length - 1
+}
+
 function randomType(types) {
   return types[Math.floor(Math.random() * types.length)]
 }
@@ -39,15 +49,18 @@ export function getEquationParts(prob) {
 function buildHardModeQueue({ factors, sessionLength, types, operation }) {
   const queue = []
   const typeAssignment = new Map()
-  for (let i = 0; i < sessionLength; i++) {
+  const seen = new Set()
+  while (queue.length < sessionLength) {
     const small = factors[Math.floor(Math.random() * factors.length)]
     const large = 11 + Math.floor(Math.random() * 89) // 11–99
     let op = operation
     if (operation === 'both') op = Math.random() < 0.5 ? 'multiplication' : 'division'
     const key = `${small}×${large}-${op}`
-    if (!typeAssignment.has(key)) typeAssignment.set(key, randomType(types))
+    if (seen.has(key)) continue
+    seen.add(key)
+    typeAssignment.set(key, randomType(types))
     queue.push({
-      id: `hm-${i}-${small}x${large}-${op}`,
+      id: `hm-${queue.length}-${small}x${large}-${op}`,
       a: small,
       b: large,
       operation: op,
@@ -114,9 +127,14 @@ export function buildQueue({ factors, sessionLength, types, operation = 'multipl
   const pool = buildWeightedPool({ factors, operation, srData, historyData })
   const queue = []
   const typeAssignment = new Map()
-
+  // Sample without replacement so no fact appears twice in the initial queue.
+  // If the pool is smaller than sessionLength, refill it once exhausted.
+  let bag = [...pool]
   for (let i = 0; i < sessionLength; i++) {
-    const fact = weightedSample(pool)
+    if (bag.length === 0) bag = [...pool]
+    const idx = weightedSampleIndex(bag)
+    const fact = bag[idx]
+    bag.splice(idx, 1)
     const key = `${fact.a}×${fact.b}-${fact.operation}`
     if (!typeAssignment.has(key)) typeAssignment.set(key, randomType(types))
     queue.push({

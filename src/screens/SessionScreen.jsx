@@ -50,16 +50,17 @@ export default function SessionScreen({
   const [showQuitDialog, setShowQuitDialog] = useState(false)
   const [answered, setAnswered]         = useState(0)
 
-  const timerRef        = useRef(null)
-  const startTimeRef    = useRef(null)
-  const queueRef        = useRef(null)
-  const indexRef        = useRef(0)
-  const totalRef        = useRef(0)
-  const resultsRef      = useRef([])
-  const totalCorrectRef = useRef(0)
-  const typeMapRef      = useRef(new Map())
-  const sm2Pending      = useRef(new Map())
-  const historyBatch    = useRef([])
+  const timerRef           = useRef(null)
+  const startTimeRef       = useRef(null)
+  const queueRef           = useRef(null)
+  const indexRef           = useRef(0)
+  const totalRef           = useRef(0)
+  const sessionLengthRef   = useRef(0)
+  const resultsRef         = useRef([])
+  const totalCorrectRef    = useRef(0)
+  const typeMapRef         = useRef(new Map())
+  const sm2Pending         = useRef(new Map())
+  const historyBatch       = useRef([])
 
   useEffect(() => {
     initSession()
@@ -79,6 +80,7 @@ export default function SessionScreen({
       typeMapRef.current = tm
       queueRef.current = prebuiltQueue
       totalRef.current = prebuiltQueue.length
+      sessionLengthRef.current = prebuiltQueue.length
       startTimeRef.current = Date.now()
       setQueue(prebuiltQueue)
       setLoading(false)
@@ -116,6 +118,7 @@ export default function SessionScreen({
     typeMapRef.current = tm
     queueRef.current = q
     totalRef.current = q.length
+    sessionLengthRef.current = settings.sessionLength
     startTimeRef.current = Date.now()
     setQueue(q)
     setLoading(false)
@@ -146,8 +149,8 @@ export default function SessionScreen({
       const prev = sm2Pending.current.get(key)
       sm2Pending.current.set(key, { existing: prev?.existing || null, correct: isCorrect })
     }
-    // Per-fact breakdown: first-attempt only (for the summary wrong/crushed lists)
-    if (!prob.isRepeat) {
+    // Per-fact breakdown: original session problems only (not repeats or auto-inserted division pairs)
+    if (!prob.isRepeat && !prob.isRelated) {
       const entry = { a: prob.a, b: prob.b, operation: op, correct: isCorrect }
       resultsRef.current = [...resultsRef.current, entry]
       setResults(prev => [...prev, entry])
@@ -279,8 +282,7 @@ export default function SessionScreen({
       }
     }
 
-    // Denominator is always the chosen session length — never derived from queue or index
-    const sessionTotal = settings?.sessionLength ?? totalRef.current
+    const sessionTotal = sessionLengthRef.current
     const correctCount = Math.min(totalCorrectRef.current, sessionTotal)
     onFinish(resultsRef.current, { durationMs, sessionTotal, correctCount })
   }
