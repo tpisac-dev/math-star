@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from './lib/supabase'
 import { buildRedemptionQueue } from './lib/queueBuilder'
+import { useLang } from './lib/i18n'
 import LoginScreen from './screens/LoginScreen'
 import ProfileScreen from './screens/ProfileScreen'
 import SetupScreen from './screens/SetupScreen'
@@ -38,6 +39,7 @@ function PageWrapper({ children }) {
 }
 
 export default function App() {
+  const { t, lang, setLang } = useLang()
   const [screen, setScreen]               = useState(SCREENS.LOGIN)
   const [user, setUser]                   = useState(null)
   const [profile, setProfile]             = useState(null)
@@ -96,18 +98,33 @@ export default function App() {
                 onClick={() => setScreen(SCREENS.DASHBOARD)}
                 className={`px-3 py-1 rounded-xl font-bold transition ${screen === SCREENS.DASHBOARD ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-purple-600'}`}
               >
-                📊 Napredak
+                {t.navProgress}
               </button>
               <button
                 onClick={() => setScreen(SCREENS.SETUP)}
                 className={`px-3 py-1 rounded-xl font-bold transition ${screen === SCREENS.SETUP ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-purple-600'}`}
               >
-                🎯 Vježbaj
+                {t.navPractice}
               </button>
+              <div className="flex items-center text-sm font-bold gap-0.5">
+                <button
+                  onClick={() => setLang('hr')}
+                  className={`px-1 transition ${lang === 'hr' ? 'text-purple-700' : 'text-gray-300 hover:text-gray-500'}`}
+                >
+                  HR
+                </button>
+                <span className="text-gray-200">/</span>
+                <button
+                  onClick={() => setLang('en')}
+                  className={`px-1 transition ${lang === 'en' ? 'text-purple-700' : 'text-gray-300 hover:text-gray-500'}`}
+                >
+                  EN
+                </button>
+              </div>
               <button
                 onClick={() => setScreen(SCREENS.PROFILES)}
                 className="text-gray-400 hover:text-gray-600 font-bold px-2"
-                title="Promijeni profil"
+                title={t.navChangeProfile}
               >
                 {profile.avatar}
               </button>

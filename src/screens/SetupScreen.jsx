@@ -1,18 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useLang } from '../lib/i18n'
 
 const BASE_FACTORS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-const OPERATIONS = [
-  { value: 'multiplication', label: 'Množenje ×' },
-  { value: 'division',       label: 'Dijeljenje ÷' },
-  { value: 'both',           label: 'Oboje ×÷' },
-]
-
-const PROBLEM_TYPES = [
-  { value: 'multiple-choice', label: '🔤 Ponuđeni odgovori' },
-  { value: 'fill-in',         label: '✏️ Upiši odgovor' },
-]
 
 function getStorageKey(profileId) {
   return `mathstar_setup_${profileId}`
@@ -26,6 +16,7 @@ function loadSaved(profileId) {
 }
 
 export default function SetupScreen({ profile, onStart }) {
+  const { t } = useLang()
   const saved = loadSaved(profile.id)
 
   const [operation, setOperation]             = useState(saved?.operation || 'multiplication')
@@ -34,6 +25,17 @@ export default function SetupScreen({ profile, onStart }) {
   const [sessionLength, setSessionLength]     = useState(saved?.sessionLength || 20)
   const [problemType, setProblemType]         = useState(saved?.problemType || 'multiple-choice')
   const [remember, setRemember]               = useState(saved !== null)
+
+  const OPERATIONS = [
+    { value: 'multiplication', label: t.opMultiplication },
+    { value: 'division',       label: t.opDivision },
+    { value: 'both',           label: t.opBoth },
+  ]
+
+  const PROBLEM_TYPES = [
+    { value: 'multiple-choice', label: t.typeMultipleChoice },
+    { value: 'fill-in',         label: t.typeFillIn },
+  ]
 
   function toggleFactor(f) {
     setSelectedFactors(prev =>
@@ -61,14 +63,14 @@ export default function SetupScreen({ profile, onStart }) {
         <div className="text-center mb-6">
           <span className="text-5xl">{profile.avatar}</span>
           <h1 className="text-2xl font-black text-purple-700 mt-1">{profile.username}</h1>
-          <p className="text-gray-500">Bok, {profile.username}!</p>
+          <p className="text-gray-500">{t.greeting(profile.username)}</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl p-6 space-y-6">
 
           {/* Operation selector */}
           <div>
-            <h2 className="text-lg font-bold text-gray-700 mb-3">Što želiš vježbati?</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">{t.whatToPractice}</h2>
             <div className="flex gap-2">
               {OPERATIONS.map(opt => (
                 <button
@@ -88,7 +90,7 @@ export default function SetupScreen({ profile, onStart }) {
 
           {/* Problem type selector */}
           <div>
-            <h2 className="text-lg font-bold text-gray-700 mb-3">Vrste zadataka</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">{t.problemTypes}</h2>
             <div className="flex gap-2">
               {PROBLEM_TYPES.map(opt => (
                 <button
@@ -108,7 +110,7 @@ export default function SetupScreen({ profile, onStart }) {
 
           {/* Factor selector — always 1–10 */}
           <div>
-            <h2 className="text-lg font-bold text-gray-700 mb-3">S kojim brojem želiš vježbati?</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">{t.whichNumber}</h2>
             <div className="grid grid-cols-5 gap-2">
               {BASE_FACTORS.map(f => (
                 <button
@@ -133,19 +135,17 @@ export default function SetupScreen({ profile, onStart }) {
                   : 'bg-orange-50 text-orange-500 border-2 border-orange-200 hover:border-orange-400'
               }`}
             >
-              {hardMode
-                ? 'Teški način 🔥 uključen — množitelji 11–99'
-                : 'Teški način 🔥 (uključuje množitelje 11–99)'}
+              {hardMode ? t.hardModeOn : t.hardModeOff}
             </button>
 
             {selectedFactors.length === 0 && (
-              <p className="text-red-400 text-sm mt-1 text-center">Odaberi barem jedan faktor</p>
+              <p className="text-red-400 text-sm mt-1 text-center">{t.selectAtLeastOne}</p>
             )}
           </div>
 
           {/* Session length */}
           <div>
-            <h2 className="text-lg font-bold text-gray-700 mb-3">Broj zadataka</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">{t.numProblems}</h2>
             <div className="flex gap-3">
               {[10, 20, 30].map(n => (
                 <button
@@ -171,7 +171,7 @@ export default function SetupScreen({ profile, onStart }) {
               onChange={e => setRemember(e.target.checked)}
               className="w-5 h-5 accent-purple-500"
             />
-            <span className="text-gray-600 font-semibold">Zapamti moje postavke</span>
+            <span className="text-gray-600 font-semibold">{t.rememberSettings}</span>
           </label>
 
           <motion.button
@@ -181,7 +181,7 @@ export default function SetupScreen({ profile, onStart }) {
             disabled={!canStart}
             className="w-full py-4 rounded-2xl text-xl font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg disabled:opacity-40 transition"
           >
-            Započni vježbanje 🚀
+            {t.startBtn}
           </motion.button>
         </div>
       </motion.div>

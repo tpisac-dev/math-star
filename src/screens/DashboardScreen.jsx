@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { useLang } from '../lib/i18n'
 
 function getMasteryColor(correct, total) {
   if (total === 0) return '#e5e7eb'
@@ -10,22 +11,16 @@ function getMasteryColor(correct, total) {
   return '#ef4444'
 }
 
-function getMasteryLabel(correct, total) {
-  if (total === 0) return 'Nije viđeno'
+function getMasteryLabel(correct, total, t) {
+  if (total === 0) return t.masteryNotSeen
   const rate = correct / total
-  if (rate >= 0.8) return 'Savladano'
-  if (rate >= 0.5) return 'U procesu'
-  return 'Treba vježbe'
+  if (rate >= 0.8) return t.masteryMastered
+  if (rate >= 0.5) return t.masteryInProgress
+  return t.masteryNeedsPractice
 }
 
-const LEGEND = [
-  { color: '#22c55e', label: 'Savladano' },
-  { color: '#eab308', label: 'U procesu' },
-  { color: '#ef4444', label: 'Treba vježbe' },
-  { color: '#e5e7eb', label: 'Nije viđeno' },
-]
-
 export default function DashboardScreen({ profile, onBack }) {
+  const { t } = useLang()
   const [historyData, setHistoryData] = useState([])
   const [srData, setSrData]           = useState([])
   const [sessions, setSessions]       = useState([])
@@ -43,7 +38,6 @@ export default function DashboardScreen({ profile, onBack }) {
     setHistoryData(hist || [])
     setSrData(sr || [])
 
-    // Rough session grouping by day
     const byDay = {}
     for (const row of (hist || [])) {
       const day = row.answered_at.split('T')[0]
@@ -60,7 +54,6 @@ export default function DashboardScreen({ profile, onBack }) {
     setLoading(false)
   }
 
-  // Build mastery map for the active operation (last 10 attempts per fact)
   const masteryMap = (() => {
     const attempts = {}
     const filtered = historyData.filter(r => (r.operation || 'multiplication') === activeTab)
@@ -81,11 +74,15 @@ export default function DashboardScreen({ profile, onBack }) {
   const dueCount = srData.filter(r => r.next_review <= today).length
   const maxScore = Math.max(...sessions.map(([, s]) => s.total), 1)
 
-  // Axis labels for heatmap:
-  // Multiplication: row = factorA, col = factorB  (factorA × factorB = product)
-  // Division:       row = divisor,  col = quotient (divisor × quotient = dividend)
-  const rowLabel  = activeTab === 'division' ? 'Dijelnik' : 'Faktor'
-  const colHeader = activeTab === 'division' ? 'Količnik' : 'Faktor'
+  const rowLabel  = activeTab === 'division' ? t.divisorLabel  : t.factorLabel
+  const colHeader = activeTab === 'division' ? t.quotientLabel : t.factorLabel
+
+  const LEGEND = [
+    { color: '#22c55e', label: t.masteryMastered },
+    { color: '#eab308', label: t.masteryInProgress },
+    { color: '#ef4444', label: t.masteryNeedsPractice },
+    { color: '#e5e7eb', label: t.masteryNotSeen },
+  ]
 
   return (
     <div className="min-h-dvh p-4 pb-8">
@@ -96,12 +93,12 @@ export default function DashboardScreen({ profile, onBack }) {
           <span className="text-4xl">{profile.avatar}</span>
           <div>
             <h1 className="text-2xl font-black text-gray-800">{profile.username}</h1>
-            <p className="text-gray-500">Tvoj napredak</p>
+            <p className="text-gray-500">{t.yourProgress}</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400 text-xl py-12">Učitavanje...</div>
+          <div className="text-center text-gray-400 text-xl py-12">{t.loading}</div>
         ) : (
           <div className="space-y-6">
             {/* Due for review */}
@@ -113,8 +110,8 @@ export default function DashboardScreen({ profile, onBack }) {
               >
                 <span className="text-3xl">🔔</span>
                 <div>
-                  <p className="font-black text-orange-700 text-xl">{dueCount} za ponavljanje danas</p>
-                  <p className="text-orange-500 text-sm">Preporučujemo ponavljanje za bolje pamćenje</p>
+                  <p className="font-black text-orange-700 text-xl">{t.dueToday(dueCount)}</p>
+                  <p className="text-orange-500 text-sm">{t.reviewRecommend}</p>
                 </div>
               </motion.div>
             )}
@@ -131,7 +128,7 @@ export default function DashboardScreen({ profile, onBack }) {
                       : 'bg-gray-100 text-gray-500 hover:bg-purple-50'
                   }`}
                 >
-                  Množenje ×
+                  {t.multiplicationTab}
                 </button>
                 <button
                   onClick={() => setActiveTab('division')}
@@ -141,12 +138,12 @@ export default function DashboardScreen({ profile, onBack }) {
                       : 'bg-gray-100 text-gray-500 hover:bg-blue-50'
                   }`}
                 >
-                  Dijeljenje ÷
+                  {t.divisionTab}
                 </button>
               </div>
 
               <h2 className="text-lg font-black text-gray-800 mb-4">
-                {activeTab === 'division' ? 'Tablice dijeljenja' : 'Tablice množenja'}
+                {activeTab === 'division' ? t.divisionTables : t.multiplicationTables}
               </h2>
 
               <div className="overflow-x-auto">
@@ -171,7 +168,7 @@ export default function DashboardScreen({ profile, onBack }) {
                         const key = `${a}×${b}`
                         const m = masteryMap[key] || { correct: 0, total: 0 }
                         const color = getMasteryColor(m.correct, m.total)
-                        const label = getMasteryLabel(m.correct, m.total)
+                        const label = getMasteryLabel(m.correct, m.total, t)
                         const tooltip = activeTab === 'division'
                           ? `${a*b} ÷ ${a} = ${b} — ${label} (${m.correct}/${m.total})`
                           : `${a} × ${b} = ${a*b} — ${label} (${m.correct}/${m.total})`
@@ -191,8 +188,8 @@ export default function DashboardScreen({ profile, onBack }) {
 
               {/* Axis labels */}
               <div className="flex gap-4 mt-3 text-xs text-gray-400 font-semibold">
-                <span>↑ {rowLabel} (redak)</span>
-                <span>→ {colHeader} (stupac)</span>
+                <span>{t.rowAxisLabel(rowLabel)}</span>
+                <span>{t.colAxisLabel(colHeader)}</span>
               </div>
 
               {/* Legend */}
@@ -209,7 +206,7 @@ export default function DashboardScreen({ profile, onBack }) {
             {/* Last 7 days bar chart */}
             {sessions.length > 0 && (
               <div className="bg-white rounded-3xl shadow-lg p-6">
-                <h2 className="text-xl font-black text-gray-800 mb-4">Zadnjih 7 dana</h2>
+                <h2 className="text-xl font-black text-gray-800 mb-4">{t.last7Days}</h2>
                 <div className="flex items-end gap-2 h-32">
                   {sessions.map(([day, s]) => {
                     const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
+import { useLang } from '../lib/i18n'
 
 function starCount(pct) {
   if (pct >= 0.9) return 3
@@ -19,16 +20,17 @@ function factShortLabel(f) {
   return `${f.a} × ${f.b}`
 }
 
-function formatTime(ms) {
+function formatTime(ms, sec) {
   const total = Math.round(ms / 1000)
   const min = Math.floor(total / 60)
-  const sec = total % 60
-  if (min === 0) return `${sec} sek`
-  if (sec === 0) return `${min} min`
-  return `${min} min ${sec} sek`
+  const s = total % 60
+  if (min === 0) return `${s} ${sec}`
+  if (s === 0) return `${min} min`
+  return `${min} min ${s} ${sec}`
 }
 
 export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 0, correctCount = 0, onPlayAgain, onChangeSettings, onRedemption }) {
+  const { t } = useLang()
   const total   = sessionTotal
   const correct = Math.min(correctCount, total)
   const pct     = total > 0 ? correct / total : 0
@@ -48,12 +50,10 @@ export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 
 
   const facts = Object.values(factMap)
 
-  // All facts with ≥1 wrong answer, sorted by wrong-count descending
   const wrongFacts = facts
     .filter(f => f.correct < f.total)
     .sort((a, b) => (b.total - b.correct) - (a.total - a.correct))
 
-  // Facts with 100% accuracy
   const crushed = facts.filter(f => f.correct === f.total && f.total > 0)
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 
         className="w-full max-w-lg"
       >
         <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
-          <h1 className="text-3xl font-black text-gray-800 mb-4">Rezultati 🏁</h1>
+          <h1 className="text-3xl font-black text-gray-800 mb-4">{t.resultsTitle}</h1>
 
           {/* Stars */}
           <div className="flex justify-center gap-2 text-5xl mb-4">
@@ -92,38 +92,36 @@ export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 
             {correct} / {total}
           </div>
           <p className="text-gray-500 text-lg mb-4">
-            {Math.round(pct * 100)}% točnih odgovora
+            {t.pctCorrect(Math.round(pct * 100))}
           </p>
 
-          {stars === 3 && <p className="text-xl font-bold text-green-600 mb-4">Odlično! Pravi si Math Star! 🌟</p>}
-          {stars === 2 && <p className="text-xl font-bold text-blue-600 mb-4">Super! Još malo vježbe! 💪</p>}
-          {stars === 1 && <p className="text-xl font-bold text-orange-500 mb-4">Dobro! Nastavi vježbati! 🎯</p>}
-          {stars === 0 && <p className="text-xl font-bold text-red-500 mb-4">Vježbaj više — možeš bolje! 🚀</p>}
+          {stars === 3 && <p className="text-xl font-bold text-green-600 mb-4">{t.stars3msg}</p>}
+          {stars === 2 && <p className="text-xl font-bold text-blue-600 mb-4">{t.stars2msg}</p>}
+          {stars === 1 && <p className="text-xl font-bold text-orange-500 mb-4">{t.stars1msg}</p>}
+          {stars === 0 && <p className="text-xl font-bold text-red-500 mb-4">{t.stars0msg}</p>}
 
           {/* Timer stats */}
           {durationMs > 0 && (
             <div className="bg-blue-50 rounded-2xl p-4 mb-4 text-left">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 font-semibold text-sm">⏱️ Vrijeme vježbanja</span>
-                <span className="font-black text-blue-600">{formatTime(durationMs)}</span>
+                <span className="text-gray-600 font-semibold text-sm">{t.practiceTime}</span>
+                <span className="font-black text-blue-600">{formatTime(durationMs, t.sec)}</span>
               </div>
               <div className="flex justify-between items-center mt-1">
-                <span className="text-gray-400 text-sm">Prosječno po zadatku</span>
-                <span className="font-bold text-blue-500 text-sm">{avgSec} sek</span>
+                <span className="text-gray-400 text-sm">{t.avgPerProblem}</span>
+                <span className="font-bold text-blue-500 text-sm">{avgSec} {t.sec}</span>
               </div>
             </div>
           )}
 
-          {/* Wrong facts — "Nastavi vježbati ove zadatke" */}
+          {/* Wrong facts */}
           {wrongFacts.length === 0 ? (
             <div className="bg-green-50 rounded-2xl p-4 mb-4 text-center">
-              <p className="text-green-600 font-bold text-lg">
-                Savršeno! Nema zadataka za ponavljanje 🌟
-              </p>
+              <p className="text-green-600 font-bold text-lg">{t.perfectNoWrong}</p>
             </div>
           ) : (
             <div className="bg-amber-50 rounded-2xl p-4 mb-4 text-left">
-              <h3 className="font-bold text-amber-700 mb-3">💪 Nastavi vježbati ove zadatke</h3>
+              <h3 className="font-bold text-amber-700 mb-3">{t.wrongFactsTitle}</h3>
               <div className="space-y-2">
                 {wrongFacts.map(f => {
                   const key = `${f.operation}|${f.a}×${f.b}`
@@ -144,7 +142,7 @@ export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 
           {/* Crushed */}
           {crushed.length > 0 && (
             <div className="bg-green-50 rounded-2xl p-4 mb-4 text-left">
-              <h3 className="font-bold text-green-600 mb-2">✅ Savladano</h3>
+              <h3 className="font-bold text-green-600 mb-2">{t.masteredSection}</h3>
               <div className="flex flex-wrap gap-2">
                 {crushed.map(f => (
                   <span key={`${f.operation}|${f.a}×${f.b}`}
@@ -164,7 +162,7 @@ export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 
               onClick={() => onRedemption(wrongFacts)}
               className="w-full py-4 rounded-2xl text-lg font-black text-white bg-gradient-to-r from-amber-400 to-orange-500 shadow-lg mb-3"
             >
-              Pokušaj još jednom 🎯
+              {t.tryAgainBtn}
             </motion.button>
           )}
 
@@ -173,13 +171,13 @@ export default function SummaryScreen({ results, durationMs = 0, sessionTotal = 
               onClick={onChangeSettings}
               className="flex-1 py-4 rounded-2xl text-base font-bold border-2 border-purple-300 text-purple-600 hover:bg-purple-50 transition"
             >
-              Promijeni postavke
+              {t.changeSettings}
             </button>
             <button
               onClick={onPlayAgain}
               className="flex-1 py-4 rounded-2xl text-base font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg hover:opacity-90 transition"
             >
-              Igraj opet 🚀
+              {t.playAgain}
             </button>
           </div>
         </div>

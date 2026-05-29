@@ -12,6 +12,7 @@ import {
 } from '../lib/queueBuilder'
 import ArrayGrid from '../components/ArrayGrid'
 import NumberPad from '../components/NumberPad'
+import { useLang } from '../lib/i18n'
 
 const STREAK_MILESTONES = [5, 10, 20]
 
@@ -37,6 +38,7 @@ export default function SessionScreen({
   onFinish,
   onQuit,
 }) {
+  const { t } = useLang()
   const [queue, setQueue]               = useState(null)
   const [index, setIndex]               = useState(0)
   const [phase, setPhase]               = useState('answering')
@@ -313,20 +315,20 @@ export default function SessionScreen({
               className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 w-full max-w-xs sm:max-w-sm text-center"
             >
               <div className="text-4xl sm:text-5xl mb-3">🤔</div>
-              <h2 className="text-base sm:text-xl font-black text-gray-800 mb-2">Prekini vježbanje?</h2>
-              <p className="text-sm text-gray-500 mb-5">Napredak iz ove sesije neće biti spremljen.</p>
+              <h2 className="text-base sm:text-xl font-black text-gray-800 mb-2">{t.quitTitle}</h2>
+              <p className="text-sm text-gray-500 mb-5">{t.quitBody}</p>
               <div className="flex flex-col gap-2.5">
                 <button
                   onClick={() => setShowQuitDialog(false)}
                   className="w-full py-3 rounded-2xl text-sm sm:text-base font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow"
                 >
-                  Nastavi vježbati
+                  {t.continuePractice}
                 </button>
                 <button
                   onClick={handleQuit}
                   className="w-full py-3 rounded-2xl text-sm sm:text-base font-bold text-gray-500 border-2 border-gray-200 hover:bg-gray-50 transition"
                 >
-                  Prekini
+                  {t.quit}
                 </button>
               </div>
             </motion.div>
@@ -345,10 +347,10 @@ export default function SessionScreen({
             ✕
           </button>
           <span className="text-2xl">{profile.avatar}</span>
-          <span className="font-bold text-gray-500">Bok, {profile.username}!</span>
+          <span className="font-bold text-gray-500">{t.greeting(profile.username)}</span>
           {noTracking && (
             <span className="text-xs bg-amber-100 text-amber-600 font-bold px-2 py-0.5 rounded-full">
-              Vježba ponavljanja 🎯
+              {t.repeatBadge}
             </span>
           )}
         </div>
@@ -359,7 +361,7 @@ export default function SessionScreen({
             animate={{ scale: 1 }}
             className="bg-orange-100 text-orange-600 font-black px-3 py-1 rounded-full text-base"
           >
-            🔥 {streak} niz
+            {t.streak(streak)}
           </motion.div>
         )}
       </div>
@@ -392,7 +394,7 @@ export default function SessionScreen({
                   ? 'bg-blue-100 text-blue-600'
                   : 'bg-purple-100 text-purple-600'
               }`}>
-                {current.operation === 'division' ? 'Dijeljenje ÷' : 'Množenje ×'}
+                {current.operation === 'division' ? t.labelDivision : t.labelMultiplication}
               </span>
 
               <div className={`text-5xl font-black mb-1 transition-colors duration-300 ${
@@ -417,7 +419,7 @@ export default function SessionScreen({
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-green-500 font-black text-xl mt-1"
                 >
-                  ✅ Točno!
+                  {t.correctMsg}
                 </motion.div>
               )}
 
@@ -479,8 +481,7 @@ export default function SessionScreen({
           >
             <div className="bg-white rounded-3xl shadow-xl p-6">
               <div className="flex items-center gap-2 mb-5">
-                <span className="text-2xl">💪</span>
-                <span className="font-black text-lg text-amber-600">Vježbajmo zajedno!</span>
+                <span className="font-black text-lg text-amber-600">{t.practiceTogether}</span>
               </div>
 
               <div className="flex justify-center mb-5">
@@ -489,7 +490,7 @@ export default function SessionScreen({
 
               <hr className="border-gray-100 mb-5" />
 
-              <p className="text-gray-400 font-bold text-center mb-2 text-sm">Sada ti:</p>
+              <p className="text-gray-400 font-bold text-center mb-2 text-sm">{t.nowYou}</p>
               {eqParts && (
                 <div className="text-4xl font-black text-gray-800 text-center mb-5">
                   {eqParts.left} {eqParts.op} {eqParts.right} = ?
@@ -506,7 +507,7 @@ export default function SessionScreen({
                     <div className="text-4xl font-black text-green-600">
                       {eqParts && `${eqParts.left} ${eqParts.op} ${eqParts.right} = ${correctAnswer}`}
                     </div>
-                    <div className="text-green-500 font-bold mt-1">✅ Točno! Odlično!</div>
+                    <div className="text-green-500 font-bold mt-1">{t.correctExcellent}</div>
                   </div>
                   <motion.button
                     initial={{ opacity: 0, y: 8 }}
@@ -516,7 +517,7 @@ export default function SessionScreen({
                     onClick={() => advance(false)}
                     className="w-full py-4 rounded-2xl text-xl font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg"
                   >
-                    Nastavi →
+                    {t.continueBtn}
                   </motion.button>
                 </motion.div>
               ) : (

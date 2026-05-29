@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { useLang } from '../lib/i18n'
 
 const AVATARS = ['🦊', '🐼', '🦁', '🐸', '🐨', '🦋', '🐬', '🦄', '🐙', '🦖', '🐧', '🐯']
 
 export default function ProfileScreen({ user, onSelectProfile }) {
+  const { t } = useLang()
   const [profiles, setProfiles] = useState([])
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
@@ -18,18 +20,10 @@ export default function ProfileScreen({ user, onSelectProfile }) {
 
   async function loadProfiles() {
     setLoading(true)
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .order('created_at')
-    // profiles are per user but allow multiple named profiles under one account
-    // we use a separate query for all profiles linked to this auth user
     const { data: all } = await supabase
       .from('profiles')
       .select('*')
       .order('created_at')
-    // Filter those belonging to this user — we store user_id separately
     setProfiles(all?.filter(p => p.user_id === user.id) || [])
     setLoading(false)
   }
@@ -62,11 +56,11 @@ export default function ProfileScreen({ user, onSelectProfile }) {
         <div className="text-center mb-8">
           <div className="text-6xl mb-2">⭐</div>
           <h1 className="text-3xl font-black text-purple-700">Math Star</h1>
-          <p className="text-gray-500 mt-1">Tko vježba danas?</p>
+          <p className="text-gray-500 mt-1">{t.whoPlays}</p>
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400 text-xl">Učitavanje...</div>
+          <div className="text-center text-gray-400 text-xl">{t.loading}</div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {profiles.map(profile => (
@@ -90,7 +84,7 @@ export default function ProfileScreen({ user, onSelectProfile }) {
                 className="bg-purple-50 border-2 border-dashed border-purple-300 rounded-3xl p-6 flex flex-col items-center gap-2 hover:border-purple-500 transition"
               >
                 <span className="text-5xl">➕</span>
-                <span className="text-lg font-bold text-purple-500">Dodaj profil</span>
+                <span className="text-lg font-bold text-purple-500">{t.addProfile}</span>
               </motion.button>
             )}
           </div>
@@ -100,7 +94,7 @@ export default function ProfileScreen({ user, onSelectProfile }) {
           onClick={signOut}
           className="mt-8 w-full text-center text-gray-400 font-semibold hover:text-gray-600"
         >
-          Odjava
+          {t.signOut}
         </button>
 
         <AnimatePresence>
@@ -118,14 +112,14 @@ export default function ProfileScreen({ user, onSelectProfile }) {
                 exit={{ scale: 0.8, opacity: 0 }}
                 className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl"
               >
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Novi profil</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">{t.newProfile}</h2>
 
                 <input
                   type="text"
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   className="w-full border-2 border-purple-100 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400 mb-4"
-                  placeholder="Ime"
+                  placeholder={t.namePlaceholder}
                   maxLength={20}
                 />
 
@@ -146,7 +140,7 @@ export default function ProfileScreen({ user, onSelectProfile }) {
                   disabled={saving || !newName.trim()}
                   className="w-full py-3 rounded-2xl text-lg font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 disabled:opacity-50"
                 >
-                  {saving ? 'Spremanje...' : 'Stvori profil'}
+                  {saving ? t.saving : t.createProfile}
                 </button>
               </motion.div>
             </motion.div>

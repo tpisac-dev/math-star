@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
+import { useLang } from '../lib/i18n'
 
 function factLabel(f) {
   if (f.operation === 'division') return `${f.a * f.b} ÷ ${f.a} = ${f.b}`
@@ -8,11 +9,11 @@ function factLabel(f) {
 }
 
 export default function RedemptionSummaryScreen({ results, onDone }) {
+  const { t } = useLang()
   const total      = results.length
   const correct    = results.filter(r => r.correct).length
   const allCorrect = correct === total && total > 0
 
-  // Facts still wrong after redemption
   const factMap = {}
   for (const r of results) {
     const op  = r.operation || 'multiplication'
@@ -50,9 +51,9 @@ export default function RedemptionSummaryScreen({ results, onDone }) {
               >
                 🌟🌟🌟
               </motion.div>
-              <h1 className="text-3xl font-black text-green-600 mb-3">Izvrsno!</h1>
-              <p className="text-xl font-bold text-green-500 mb-2">Savladala si sve!</p>
-              <p className="text-gray-400 mb-8">Bravo! Odlično vježbanje danas!</p>
+              <h1 className="text-3xl font-black text-green-600 mb-3">{t.redemptionExcellent}</h1>
+              <p className="text-xl font-bold text-green-500 mb-2">{t.redemptionMasteredAll}</p>
+              <p className="text-gray-400 mb-8">{t.redemptionBravo}</p>
             </>
           ) : (
             <>
@@ -64,15 +65,15 @@ export default function RedemptionSummaryScreen({ results, onDone }) {
               >
                 💪
               </motion.div>
-              <h1 className="text-3xl font-black text-gray-800 mb-3">Dobro vježbanje!</h1>
+              <h1 className="text-3xl font-black text-gray-800 mb-3">{t.redemptionGood}</h1>
               <p className="text-lg text-gray-500 mb-1">
-                {correct} / {total} točnih odgovora
+                {t.correctAnswers(correct, total)}
               </p>
-              <p className="text-gray-400 mb-4">Sutra ćemo pokušati ponovno 😊</p>
+              <p className="text-gray-400 mb-4">{t.redemptionTomorrow}</p>
 
               {stillWrong.length > 0 && (
                 <div className="bg-amber-50 rounded-2xl p-4 mb-6 text-left">
-                  <p className="text-amber-600 font-bold text-sm mb-2">Još malo vježbe za:</p>
+                  <p className="text-amber-600 font-bold text-sm mb-2">{t.redemptionStillPractice}</p>
                   <div className="space-y-1">
                     {stillWrong.map(f => (
                       <p key={`${f.operation}|${f.a}×${f.b}`} className="font-bold text-gray-600 text-sm">
@@ -91,7 +92,7 @@ export default function RedemptionSummaryScreen({ results, onDone }) {
             onClick={onDone}
             className="w-full py-4 rounded-2xl text-xl font-black text-white bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg"
           >
-            Nastavi →
+            {t.continueArrow}
           </motion.button>
         </div>
       </motion.div>
