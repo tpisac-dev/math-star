@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useLang } from '../lib/i18n'
 
 export default function LoginScreen({ onLogin }) {
-  const { t } = useLang()
+  const { t, lang, setLang } = useLang()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isRegister, setIsRegister] = useState(false)
@@ -34,7 +34,22 @@ export default function LoginScreen({ onLogin }) {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4">
+    <div className="min-h-dvh flex items-center justify-center p-4 relative">
+      <div className="absolute top-4 right-4 flex items-center text-sm font-bold gap-0.5">
+        <button
+          onClick={() => setLang('hr')}
+          className={`px-1 transition ${lang === 'hr' ? 'text-purple-700' : 'text-gray-300 hover:text-gray-500'}`}
+        >
+          HR
+        </button>
+        <span className="text-gray-200">/</span>
+        <button
+          onClick={() => setLang('en')}
+          className={`px-1 transition ${lang === 'en' ? 'text-purple-700' : 'text-gray-300 hover:text-gray-500'}`}
+        >
+          EN
+        </button>
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
